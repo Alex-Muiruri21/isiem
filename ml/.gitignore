@@ -1,0 +1,6 @@
+data/*.txt
+data/*.csv
+*.joblib
+tests/sample_alerts.json
+tests/verdicts*.json
+models/known_ips.json
