@@ -1,0 +1,12 @@
+<!--
+  Honeypot agent: add this inside <ossec_config> in the Cowrie VM's
+  /var/ossec/etc/ossec.conf, then: sudo systemctl restart wazuh-agent
+
+  It ships Cowrie's JSON session log into Wazuh so honeypot events reach the
+  manager, fire rules 100010-100013, and feed the ML engine. (This block was
+  already added during the original build; kept here so the config is in the repo.)
+-->
+<localfile>
+  <log_format>json</log_format>
+  <location>/home/cowrie/cowrie/var/log/cowrie/cowrie.json</location>
+</localfile>
