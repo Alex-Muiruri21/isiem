@@ -1,6 +1,5 @@
-data/*.txt
-data/*.csv
-*.joblib
+# Transient run artifacts (not the trained models or datasets, which we keep
+# tracked so the project is reproducible from the repo alone).
 tests/sample_alerts.json
 tests/verdicts*.json
 models/known_ips.json
