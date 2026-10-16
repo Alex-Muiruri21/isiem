@@ -1,0 +1,13 @@
+{
+  "rf_accuracy_matched_split": 99.89,
+  "rf_accuracy_official_testset": 73.79,
+  "iso_accuracy_official_testset": 81.35,
+  "dataset": "NSL-KDD (KDDTrain+ / KDDTest+)",
+  "classes": [
+    "DoS",
+    "Probe",
+    "R2L",
+    "U2R",
+    "normal"
+  ]
+}

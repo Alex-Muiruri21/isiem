@@ -1,0 +1,52 @@
+NSL-KDD benchmark — Random Forest + Isolation Forest
+============================================================
+Loaded: 125973 train rows, 22544 official test rows
+Train families: {'normal': 67343, 'DoS': 45927, 'Probe': 11656, 'R2L': 995, 'U2R': 52}
+
+[1] Random Forest — matched 80/20 split of KDDTrain+
+------------------------------------------------------------
+Accuracy (matched split): 99.89%
+              precision    recall  f1-score   support
+
+         DoS       1.00      1.00      1.00      9186
+       Probe       1.00      1.00      1.00      2331
+         R2L       0.99      0.96      0.97       199
+         U2R       0.89      0.80      0.84        10
+      normal       1.00      1.00      1.00     13469
+
+    accuracy                           1.00     25195
+   macro avg       0.98      0.95      0.96     25195
+weighted avg       1.00      1.00      1.00     25195
+
+
+[2] Random Forest — official KDDTest+ (novel attacks present)
+------------------------------------------------------------
+Accuracy (official test set): 73.79%
+              precision    recall  f1-score   support
+
+         DoS       0.96      0.77      0.85      7460
+       Probe       0.86      0.60      0.70      2421
+         R2L       0.67      0.00      0.00      2885
+         U2R       0.60      0.04      0.08        67
+      normal       0.63      0.97      0.77      9711
+
+    accuracy                           0.74     22544
+   macro avg       0.74      0.48      0.48     22544
+weighted avg       0.77      0.74      0.69     22544
+
+Confusion matrix saved -> evidence/benchmark_rf_confusion.csv
+
+[3] Isolation Forest — trained on NORMAL rows only
+------------------------------------------------------------
+Accuracy (normal vs attack on test set): 81.35%
+              precision    recall  f1-score   support
+
+      attack       0.93      0.73      0.82     12833
+      normal       0.72      0.93      0.81      9711
+
+    accuracy                           0.81     22544
+   macro avg       0.82      0.83      0.81     22544
+weighted avg       0.84      0.81      0.81     22544
+
+
+Summary: {"rf_accuracy_matched_split": 99.89, "rf_accuracy_official_testset": 73.79, "iso_accuracy_official_testset": 81.35, "dataset": "NSL-KDD (KDDTrain+ / KDDTest+)", "classes": ["DoS", "Probe", "R2L", "U2R", "normal"]}
