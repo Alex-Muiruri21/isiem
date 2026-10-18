@@ -29,7 +29,7 @@ Host: Windows laptop, 16 GB, VMware Workstation 17.6. All VMs on **NAT** (192.16
 | Endpoint-1 (Ubuntu 22.04) | DHCP (.132 used as target) | `endpoint` / `endpoint123` | Wazuh agent active |
 | Endpoint-2 (full clone of Endpoint-1) | DHCP | as above | Agent active (client.keys reset) |
 | Windows 11 host | host IP | n/a | Wazuh agent 4.14.9 active (outside original scope) |
-| Cowrie-Honeypot (Ubuntu 22.04) | 192.168.242.135 | `honeypot` / `honeypot123` | Cowrie (git, Python 3.11 venv) on 2222, iptables 22→2222, systemd `cowrie.service`, agent reads `/home/cowrie/cowrie/var/log/cowrie/cowrie.json` |
+| Cowrie-Honeypot (Ubuntu 22.04) | 192.168.242.202 | `honeypot` / `honeypot123` | Cowrie (git, Python 3.11 venv) on 2222, iptables 22→2222, systemd `cowrie.service`, agent reads `/home/cowrie/cowrie/var/log/cowrie/cowrie.json` |
 | Kali | NAT | n/a | Attacker, no agent |
 
 Fixes made on the way: indexer JVM heap 1g; cert permissions + `admin_dn`/`nodes_dn` matched to

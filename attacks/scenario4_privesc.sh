@@ -17,7 +17,7 @@ echo "[*] $(stamp)  Simulating repeated sudo attempts via SSH to generate events
 if command -v sshpass >/dev/null; then
   for i in 1 2 3; do
     sshpass -p "${LAT_PASS:-endpoint123}" ssh -o StrictHostKeyChecking=no \
-      "${LAT_USER:-endpoint}@$ENDPOINT1" "sudo -n id 2>&1 | head -1" 2>&1 | tail -1
+      "${LAT_USER:-endpoint1}@$ENDPOINT1" "sudo -n id 2>&1 | head -1" 2>&1 | tail -1
   done
 fi
 echo "END: $(stamp)"

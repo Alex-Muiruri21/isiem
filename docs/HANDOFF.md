@@ -64,9 +64,9 @@ values below are the ones the code assumes.
 | VM | OS | IP | Login | Role |
 |---|---|---|---|---|
 | Wazuh Server | Ubuntu 22.04 | 192.168.242.130 | `wazuh-user` / `wazuh` | Wazuh 4.14.8 all-in-one (indexer, manager, dashboard). Dashboard `https://192.168.242.130`, admin/admin. API user wazuh-wui / wazuh-wui. Runs the ML engine. |
-| Endpoint-1 | Ubuntu 22.04 | 192.168.242.132 | `endpoint` / `endpoint123` | Monitored host, Wazuh agent |
-| Endpoint-2 | Ubuntu 22.04 (full clone of E-1) | 192.168.242.133 | `endpoint` / `endpoint123` | Monitored host, Wazuh agent (client.keys was reset after cloning) |
-| Cowrie-Honeypot | Ubuntu 22.04 | 192.168.242.135 | `honeypot` / `honeypot123` | Cowrie on 2222, iptables redirects 22→2222, systemd `cowrie.service`, Wazuh agent ships `/home/cowrie/cowrie/var/log/cowrie/cowrie.json` |
+| Endpoint-1 | Ubuntu 22.04 | 192.168.242.201 | `endpoint` / `endpoint123` | Monitored host, Wazuh agent |
+| Endpoint-2 | Ubuntu 22.04 (full clone of E-1) | 192.168.242.200 | `endpoint` / `endpoint123` | Monitored host, Wazuh agent (client.keys was reset after cloning) |
+| Cowrie-Honeypot | Ubuntu 22.04 | 192.168.242.202 | `honeypot` / `honeypot123` | Cowrie on 2222, iptables redirects 22→2222, systemd `cowrie.service`, Wazuh agent ships `/home/cowrie/cowrie/var/log/cowrie/cowrie.json` |
 | Kali 2025.4 | Kali | (NAT, DHCP or static) | — | Attacker. No agent. |
 | Windows host | Windows 11 | host IP on VMnet8 | — | Wazuh agent 4.14.9 (extra, outside original scope) |
 

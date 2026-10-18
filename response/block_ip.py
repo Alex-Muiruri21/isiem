@@ -26,9 +26,9 @@ LOG = "/var/ossec/logs/active-responses.log"
 # Never block these. EDIT to match the lab: manager IP, gateway, DNS.
 WHITELIST = {
     "192.168.242.130",   # Wazuh manager
-    "192.168.242.132",   # Endpoint-1
-    "192.168.242.133",   # Endpoint-2
-    "192.168.242.135",   # Cowrie honeypot
+    "192.168.242.201",   # Endpoint-1
+    "192.168.242.200",   # Endpoint-2
+    "192.168.242.202",   # Cowrie honeypot
     "192.168.242.2",     # VMware NAT gateway
     "192.168.242.1",     # Windows host on VMnet8
     "127.0.0.1",

@@ -6,7 +6,7 @@
 set -u; cd "$(dirname "$0")"; source ./targets.sh
 banner "SCENARIO 3: LATERAL MOVEMENT (SSH fan-out)"
 HOSTS=("$ENDPOINT1" "$ENDPOINT2" "$WAZUH_SERVER")
-USER="${LAT_USER:-endpoint}"; PASS="${LAT_PASS:-endpoint123}"
+USER="${LAT_USER:-endpoint1}"; PASS="${LAT_PASS:-endpoint123}"
 for h in "${HOSTS[@]}"; do
   echo "[*] $(stamp)  SSH -> $h as $USER"
   if command -v sshpass >/dev/null; then

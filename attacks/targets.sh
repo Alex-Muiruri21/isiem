@@ -7,9 +7,9 @@
 # authorised Section 3.5.3 validation. Do not point them at anything else.
 
 export WAZUH_SERVER="192.168.242.130"
-export ENDPOINT1="192.168.242.132"
-export ENDPOINT2="192.168.242.133"
-export HONEYPOT="192.168.242.135"
+export ENDPOINT1="192.168.242.201"
+export ENDPOINT2="192.168.242.200"
+export HONEYPOT="192.168.242.202"
 
 # A small wordlist is generated if rockyou is not unpacked, to keep runs quick.
 export SSH_USER="root"
