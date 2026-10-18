@@ -30,7 +30,6 @@ Expect the folder list and `ENDPOINT1="192.168.242.201"`.
 sudo cp ~/isiem/wazuh/rules/isiem_rules.xml /var/ossec/etc/rules/
 ```
 ```bash
-sudo cp ~/isiem/wazuh/decoders/isiem_decoders.xml /var/ossec/etc/decoders/
 ```
 ```bash
 sudo mkdir -p /var/log/isiem && sudo chmod 755 /var/log/isiem

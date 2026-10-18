@@ -158,7 +158,6 @@ Found on 2026-10-18 in the rebuilt code, fixed before deployment:
 | `ml/tests/` | `make_sample_alerts.py` + `test_detection.py` (replays all categories; **passes**) | anywhere |
 | `ml/data/`, `ml/models/` | NSL-KDD files, trained benchmark models (tracked in git) | — |
 | `wazuh/rules/isiem_rules.xml` | Rules 100010–100013 (Cowrie), 100050–100052 (ML verdicts; 100051/100052 trigger AR) | manager `/var/ossec/etc/rules/` |
-| `wazuh/decoders/isiem_decoders.xml` | Placeholder (all sources are JSON, auto-decoded) | manager `/var/ossec/etc/decoders/` |
 | `wazuh/config/ossec-manager-snippets.conf` | localfile for verdict log + 3 `<command>` + 3 `<active-response>` blocks | paste into manager ossec.conf |
 | `wazuh/config/ossec-agent-cowrie-localfile.xml` | Cowrie log shipping (already applied) | honeypot agent |
 | `response/block_ip.py` | AR: iptables DROP attacker (add/delete), whitelist of lab IPs | every agent `/var/ossec/active-response/bin/` |

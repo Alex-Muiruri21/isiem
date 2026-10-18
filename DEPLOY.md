@@ -34,7 +34,6 @@ On the **Wazuh server**:
 
 ```bash
 sudo cp wazuh/rules/isiem_rules.xml      /var/ossec/etc/rules/
-sudo cp wazuh/decoders/isiem_decoders.xml /var/ossec/etc/decoders/
 sudo mkdir -p /var/log/isiem && sudo chmod 755 /var/log/isiem
 ```
 
