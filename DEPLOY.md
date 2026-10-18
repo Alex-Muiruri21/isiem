@@ -62,6 +62,12 @@ sudo chown root:wazuh /var/ossec/active-response/bin/{block_ip,lock_account,noti
 header of `response/notify_admin.py`, `sudo chmod 600` it. Without it, email is
 skipped cleanly.
 
+## Step 2b — endpoints: make port scans visible
+
+On **Endpoint-1 and Endpoint-2**: `sudo bash attacks/endpoint_prep.sh`
+(logs inbound SYNs so Wazuh sees scans). Verify one logged line decodes with
+`sudo /var/ossec/bin/wazuh-logtest` on the manager.
+
 ## Step 3 — Wazuh server: the ML engine
 
 ```bash
@@ -98,7 +104,7 @@ python3 attacks/measure.py --start "<START time from the script>" \
         --ip <attacker IP> --scenario "SSH Brute Force"
 ```
 
-Each run appends a row to `evidence/metrics.csv`. Run each scenario **3 times**
+Each run appends a row to `evidence/metrics.csv`. **Restart `ml_engine.py` between runs** (it reports each IP/category once per process). Run each scenario **3 times**
 (Section 3.5.3) and the averages are your MTTD/MTTR for Chapter 5.
 
 ---

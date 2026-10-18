@@ -19,6 +19,7 @@ lock, email) driven by Wazuh Active Response.
 | `evidence/` | benchmark results, metrics (for Chapter 5) | — |
 
 ## Start here
+- **`docs/HANDOFF.md`** — full project handoff (read first if you are new).
 - **`DEPLOY.md`** — what to install where, and how to run the scenarios (follow this
   when the lab VMs are powered on).
 - **`PROJECT_NOTES.md`** — status, lab inventory, credentials, known issues, plan.

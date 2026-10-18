@@ -59,9 +59,10 @@ def _parse_ts(alert):
 
 def source_ip(alert):
     """Best-effort extraction of the actor IP from a Wazuh alert."""
-    data = alert.get("data", {})
-    return (data.get("srcip") or data.get("src_ip") or data.get("source_ip")
-            or alert.get("agent", {}).get("ip") if alert.get("data") else None)
+    # Only the attacker-side fields. Never fall back to the agent's own IP: that
+    # would make a monitored endpoint look like an attacker (and get it blocked).
+    data = alert.get("data", {}) or {}
+    return data.get("srcip") or data.get("src_ip") or data.get("source_ip")
 
 
 class BehaviourAggregator:
@@ -81,6 +82,11 @@ class BehaviourAggregator:
         })
 
     def add(self, alert):
+        data0 = alert.get("data", {}) or {}
+        # Skip the engine's own verdicts when Wazuh re-ingests them into
+        # alerts.json, otherwise each verdict would feed back into the features.
+        if data0.get("integration") == "isiem-ml":
+            return
         ip = source_ip(alert)
         if not ip:
             return
