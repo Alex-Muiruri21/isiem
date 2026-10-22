@@ -1,0 +1,16 @@
+<!--
+  Endpoints (and the manager, for Scenario 5 beacons aimed at it): make sure the
+  Wazuh agent reads the kernel log, where the iptables LOG rule from
+  attacks/endpoint_prep.sh writes its "ISIEM-SYN:" lines.
+
+  FIRST check whether it is already covered (Ubuntu's default agent config often
+  reads /var/log/syslog or journald, which also contain kernel lines):
+    sudo grep -n -A2 'syslog\|journald\|kern.log' /var/ossec/etc/ossec.conf
+  Only if none of those appear, add this block inside <ossec_config> and run
+    sudo systemctl restart wazuh-agent
+  (Adding kern.log when syslog is already read would double-count each SYN.)
+-->
+<localfile>
+  <log_format>syslog</log_format>
+  <location>/var/log/kern.log</location>
+</localfile>

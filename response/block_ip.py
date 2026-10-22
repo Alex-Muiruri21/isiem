@@ -2,32 +2,43 @@
 """
 block_ip.py  --  Wazuh Active Response script: firewall-block an attacking IP.
 
-Runs ON the agent Wazuh selects (configured <location>local</location>, i.e. the
-host that raised the alert), NOT on the manager. Wazuh passes a JSON object on
-stdin; for an "add" command we read the source IP from the alert and insert an
-iptables DROP rule, and for "delete" we remove it (Active Response timeout).
+Wazuh runs this on every host the <active-response> block targets:
+  * location=all     -> every agent (the endpoints do the real containment)
+  * location=server  -> the manager too, so measure.py can read a BLOCKED line
+                        from the manager's own active-responses.log
+Wazuh passes a JSON object on stdin; for "add" we read the source IP from the
+alert and insert an iptables DROP rule, and for "delete" we remove it (Active
+Response timeout).
 
-Deploy to  /var/ossec/active-response/bin/block_ip.py  on every endpoint, chmod 750,
-owner root:wazuh. Registered via the <command>/<active-response> blocks in
-ossec-manager-snippets.conf.
+Deploy to  /var/ossec/active-response/bin/block_ip.py  on every agent and the
+manager, chmod 750, owner root:wazuh.
 
-Safety: a whitelist of infrastructure IPs (the manager, gateways, the local host)
-is never blocked. This is the fix for the earlier script, which could block an
-endpoint's own address and sever it from the manager.
+Lessons from the live lab, fixed here:
+  * wazuh-execd starts scripts with a minimal PATH that does not include
+    /usr/sbin, so a bare "iptables" call fails with FileNotFoundError. The
+    binary is resolved to an absolute path below.
+  * An uncaught exception used to leave no trace in the log. Every invocation is
+    now logged on arrival, and any crash is logged as "CRASH: ..." before exit.
+
+Safety: a whitelist of infrastructure IPs (the manager, gateways, the endpoints,
+the local host) is never blocked, so an endpoint is never cut off from the manager.
 """
 import json
+import os
 import sys
+import shutil
 import subprocess
 import ipaddress
 from datetime import datetime
 
 LOG = "/var/ossec/logs/active-responses.log"
 
-# Never block these. EDIT to match the lab: manager IP, gateway, DNS.
+# Never block these. EDIT to match the lab: manager IP, gateway, endpoints.
+# Both .200 and .201 are listed because DHCP has swapped the two endpoints before.
 WHITELIST = {
     "192.168.242.130",   # Wazuh manager
-    "192.168.242.201",   # Endpoint-1
-    "192.168.242.200",   # Endpoint-2
+    "192.168.242.201",   # Endpoint (DHCP may swap .200/.201)
+    "192.168.242.200",   # Endpoint (DHCP may swap .200/.201)
     "192.168.242.202",   # Cowrie honeypot
     "192.168.242.2",     # VMware NAT gateway
     "192.168.242.1",     # Windows host on VMnet8
@@ -35,6 +46,13 @@ WHITELIST = {
 }
 # Also never block private-infra ranges you rely on, if any:
 WHITELIST_NETS = []  # e.g. [ipaddress.ip_network("10.0.0.0/24")]
+
+SAFE_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+
+def iptables_bin():
+    found = shutil.which("iptables", path=SAFE_PATH)
+    return found or "/usr/sbin/iptables"
 
 
 def log(msg):
@@ -53,11 +71,12 @@ def is_whitelisted(ip):
 
 
 def run(args):
-    return subprocess.run(args, capture_output=True, text=True)
+    env = dict(os.environ, PATH=SAFE_PATH)
+    return subprocess.run(args, capture_output=True, text=True, env=env)
 
 
 def main():
-    raw = sys.stdin.read()
+    raw = sys.stdin.readline() or sys.stdin.read()
     try:
         msg = json.loads(raw)
     except json.JSONDecodeError:
@@ -66,8 +85,9 @@ def main():
 
     command = msg.get("command", "")
     alert = msg.get("parameters", {}).get("alert", {})
-    src_ip = (alert.get("data", {}).get("srcip")
-              or alert.get("data", {}).get("src_ip"))
+    data = alert.get("data", {}) or {}
+    src_ip = data.get("srcip") or data.get("src_ip")
+    log(f"received '{command}' for {src_ip} (rule {alert.get('rule', {}).get('id')})")
 
     if not src_ip:
         log("no source IP in alert; nothing to do")
@@ -76,11 +96,12 @@ def main():
         log(f"refusing to block whitelisted/infra IP {src_ip}")
         sys.exit(0)
 
+    ipt = iptables_bin()
     if command == "add":
         # idempotent: check first
-        chk = run(["iptables", "-C", "INPUT", "-s", src_ip, "-j", "DROP"])
+        chk = run([ipt, "-C", "INPUT", "-s", src_ip, "-j", "DROP"])
         if chk.returncode != 0:
-            r = run(["iptables", "-I", "INPUT", "1", "-s", src_ip, "-j", "DROP"])
+            r = run([ipt, "-I", "INPUT", "1", "-s", src_ip, "-j", "DROP"])
             if r.returncode == 0:
                 log(f"BLOCKED {src_ip}")
             else:
@@ -88,7 +109,7 @@ def main():
         else:
             log(f"{src_ip} already blocked")
     elif command == "delete":
-        r = run(["iptables", "-D", "INPUT", "-s", src_ip, "-j", "DROP"])
+        r = run([ipt, "-D", "INPUT", "-s", src_ip, "-j", "DROP"])
         log(f"UNBLOCKED {src_ip}" if r.returncode == 0
             else f"unblock {src_ip}: {r.stderr.strip()}")
     else:
@@ -96,4 +117,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as e:  # never die silently again
+        try:
+            log(f"CRASH: {e!r}")
+        finally:
+            raise

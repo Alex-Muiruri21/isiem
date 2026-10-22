@@ -44,6 +44,12 @@ KNOWN_IPS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               "models", "known_ips.json")
 BEACON_MIN_EVENTS = 4        # events needed before a beacon-interval check
 BEACON_JITTER = 0.25         # max relative deviation of intervals to call it regular
+# Lab infrastructure that is never scored as an actor: the Windows host browsing the
+# dashboard, the NAT gateway, loopback and the manager itself. Without this, once
+# SYN logging is on, ordinary dashboard traffic would read as "beaconing".
+IGNORE_ACTORS = set(filter(None, os.environ.get(
+    "ISIEM_IGNORE_IPS",
+    "192.168.242.1,192.168.242.2,192.168.242.130,127.0.0.1").split(",")))
 
 
 def load_known_ips():
@@ -105,6 +111,8 @@ def evaluate(window, known_ips, clf, emitted):
             beacon_ts.setdefault(ip, []).append(_parse_ts(alert))
 
     for ip, feats, vec in agg.all_features():
+        if ip in IGNORE_ACTORS:
+            continue
         verdict = clf.classify(feats, vec)
         category = verdict["category"]
 

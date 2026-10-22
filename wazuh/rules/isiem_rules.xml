@@ -4,12 +4,21 @@
 
   Rule-id block 100000-100099 is reserved for ISIEM (Wazuh user range is 100000+).
 
-  Two groups:
+  Three groups:
     * cowrie   - raise alerts from the honeypot JSON so decoy activity is visible
                   and can seed the ML engine.
     * isiem_ml - raise alerts from the ML engine's verdicts so each behavioural
                   detection shows on the dashboard, and so Active Response can be
                   attached to the high-severity ones (see ossec-manager-snippets.conf).
+    * isiem_net - turn the endpoints' "ISIEM-SYN:" kernel log lines (iptables LOG
+                  rule from attacks/endpoint_prep.sh) into low-level alerts carrying
+                  srcip / dstip / dstport. Port scans, lateral fan-out and beaconing
+                  are only visible to the ML engine through these. Needs
+                  wazuh/decoders/isiem_decoders.xml on the manager.
+
+  Note on 100051: the severity match MUST be type="pcre2". With the default
+  (OS_Regex) matcher the character class [0-5] is not supported, so the rule never
+  matched and Active Response never fired. Verified live on Wazuh 4.14.
 -->
 <group name="cowrie,honeypot,">
 
@@ -55,7 +64,7 @@
   <!-- Critical behavioural detections (severity >= 10) -> trigger Active Response. -->
   <rule id="100051" level="12">
     <if_sid>100050</if_sid>
-    <field name="severity">^1[0-5]$</field>
+    <field name="severity" type="pcre2">^1[0-5]$</field>
     <description>ISIEM ML CRITICAL: $(category) from $(src_ip) (sev $(severity))</description>
     <group>isiem_ml,attack,active_response,</group>
   </rule>
@@ -66,5 +75,17 @@
     <field name="category">Honeypot Interaction</field>
     <description>ISIEM ML: honeypot interaction from $(src_ip) - unauthorised by definition</description>
     <group>isiem_ml,honeypot,active_response,</group>
+  </rule>
+</group>
+
+<group name="isiem_net,">
+
+  <!-- One inbound TCP SYN logged by the endpoint's iptables LOG rule. Level 3 so it
+       is written to alerts.json (default log_alert_level is 3) where the ML engine
+       reads it; groups firewall/connection feed the engine's conn_events feature. -->
+  <rule id="100020" level="3">
+    <decoded_as>isiem-syn</decoded_as>
+    <description>ISIEM: inbound TCP SYN $(srcip) -> $(dstip):$(dstport)</description>
+    <group>firewall,connection,</group>
   </rule>
 </group>

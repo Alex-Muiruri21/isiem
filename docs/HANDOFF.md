@@ -202,7 +202,7 @@ must say NSL-KDD is the training set.
    `train_benchmark.py`, then start `ml_engine.py` (live) with sudo.
 6. **Kali:** run scenario 1…5. After each, on the manager:
    `python3 attacks/measure.py --start "<START printed>" --ip <kali IP> --scenario "<name>"`.
-   Each scenario × 3 runs. Between runs: `sudo iptables -F INPUT` on endpoints (or wait
+   Each scenario × 3 runs. Between runs: `sudo iptables -D INPUT -s <KALI-IP> -j DROP` on endpoints + server (never `-F INPUT`, it removes the SYN LOG rule) (or wait
    the 600 s AR timeout), unlock any locked test user, and **restart ml_engine.py**
    (it reports each IP/category once per process, so a restart re-arms it).
 7. Screenshots for Chapter 5 (dashboard agents, Cowrie alert, isiem_ml alerts,

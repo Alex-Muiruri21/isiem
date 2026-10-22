@@ -25,6 +25,13 @@ Feature vector (per source IP, within the window), FEATURE_NAMES below:
   new_source             1 if this IP has not been seen before this window
   max_rule_level         highest Wazuh rule level seen from this IP
   event_count            total events from this IP in the window
+  priv_events            sudo / privilege events on a host this IP is logged into
+
+Attribution note (priv_events): sudo log lines carry no source IP, so they used to
+be dropped and Privilege Escalation could never be attributed to an actor. They are
+now attributed to the source IP of the most recent successful login on the SAME
+agent within the window. The manager itself (agent 000) is excluded so an analyst
+administering the SIEM over SSH is not scored as an attacker.
 """
 import json
 from collections import defaultdict
@@ -33,7 +40,7 @@ from datetime import datetime
 FEATURE_NAMES = [
     "failed_logins", "successful_logins", "distinct_users", "distinct_dst_hosts",
     "distinct_dst_ports", "honeypot_hits", "cowrie_commands", "conn_events",
-    "off_hours", "new_source", "max_rule_level", "event_count",
+    "off_hours", "new_source", "max_rule_level", "event_count", "priv_events",
 ]
 
 # Wazuh rule groups we key off. Kept as substrings so minor group-name changes
@@ -41,6 +48,8 @@ FEATURE_NAMES = [
 GRP_AUTH_FAIL = ("authentication_failed", "invalid_login", "authentication_failures")
 GRP_AUTH_OK = ("authentication_success",)
 GRP_CONN = ("firewall", "connection", "netinfo")
+GRP_PRIV = ("sudo",)
+MANAGER_AGENT_IDS = {"000"}
 
 
 def _parse_ts(alert):
@@ -55,6 +64,11 @@ def _parse_ts(alert):
         except ValueError:
             continue
     return None
+
+
+def _agent_key(alert):
+    agent = alert.get("agent", {}) or {}
+    return str(agent.get("id") or agent.get("name") or "")
 
 
 def source_ip(alert):
@@ -79,7 +93,9 @@ class BehaviourAggregator:
             "dst_hosts": set(), "dst_ports": set(), "honeypot_hits": 0,
             "cowrie_commands": 0, "conn_events": 0, "off_hours": 0,
             "max_rule_level": 0, "event_count": 0, "seen_now": set(),
+            "priv_events": 0,
         })
+        self._login_src = {}  # agent -> srcip of latest successful login
 
     def add(self, alert):
         data0 = alert.get("data", {}) or {}
@@ -87,13 +103,20 @@ class BehaviourAggregator:
         # alerts.json, otherwise each verdict would feed back into the features.
         if data0.get("integration") == "isiem-ml":
             return
+        rule = alert.get("rule", {})
+        groups = [g.lower() for g in rule.get("groups", [])]
+        agent_key = _agent_key(alert)
+        is_priv = any(any(k in g for k in GRP_PRIV) for g in groups)
+
         ip = source_ip(alert)
+        attributed = False
+        if not ip and is_priv and agent_key not in MANAGER_AGENT_IDS:
+            ip = self._login_src.get(agent_key)
+            attributed = ip is not None
         if not ip:
             return
         a = self._acc[ip]
         data = alert.get("data", {})
-        rule = alert.get("rule", {})
-        groups = [g.lower() for g in rule.get("groups", [])]
         agent_name = (alert.get("agent", {}).get("name") or "").lower()
         level = int(rule.get("level", 0) or 0)
 
@@ -104,6 +127,10 @@ class BehaviourAggregator:
             a["failed_logins"] += 1
         if any(any(k in g for k in GRP_AUTH_OK) for g in groups):
             a["successful_logins"] += 1
+            if not attributed and agent_key:
+                self._login_src[agent_key] = ip
+        if attributed:
+            a["priv_events"] += 1
         if any(any(k in g for k in GRP_CONN) for g in groups):
             a["conn_events"] += 1
 
@@ -136,6 +163,7 @@ class BehaviourAggregator:
             len(a["dst_hosts"]), len(a["dst_ports"]), a["honeypot_hits"],
             a["cowrie_commands"], a["conn_events"], a["off_hours"],
             0 if ip in self.known_ips else 1, a["max_rule_level"], a["event_count"],
+            a["priv_events"],
         ]
 
     def all_features(self):
