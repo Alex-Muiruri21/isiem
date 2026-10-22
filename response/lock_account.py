@@ -32,7 +32,7 @@ def user_exists(user):
 
 def main():
     try:
-        msg = json.loads(sys.stdin.readline() or sys.stdin.read())
+        msg = json.loads(sys.stdin.readline())
     except json.JSONDecodeError:
         log("could not parse stdin")
         sys.exit(1)

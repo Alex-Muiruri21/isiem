@@ -44,7 +44,8 @@ def log(msg):
 
 def main():
     try:
-        msg = json.loads(sys.stdin.read())
+        # readline, not read(): wazuh-execd keeps stdin open, so read() waits forever
+        msg = json.loads(sys.stdin.readline())
     except json.JSONDecodeError:
         log("could not parse stdin")
         sys.exit(1)

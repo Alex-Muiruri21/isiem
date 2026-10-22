@@ -76,7 +76,7 @@ def run(args):
 
 
 def main():
-    raw = sys.stdin.readline() or sys.stdin.read()
+    raw = sys.stdin.readline()  # execd keeps stdin open; read() would hang
     try:
         msg = json.loads(raw)
     except json.JSONDecodeError:
