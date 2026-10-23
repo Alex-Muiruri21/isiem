@@ -13,8 +13,7 @@
     * isiem_net - turn the endpoints' "ISIEM-SYN:" kernel log lines (iptables LOG
                   rule from attacks/endpoint_prep.sh) into low-level alerts carrying
                   srcip / dstip / dstport. Port scans, lateral fan-out and beaconing
-                  are only visible to the ML engine through these. Needs
-                  wazuh/decoders/isiem_decoders.xml on the manager.
+                  are only visible to the ML engine through these.
 
   Note on 100051: the severity match MUST be type="pcre2". With the default
   (OS_Regex) matcher the character class [0-5] is not supported, so the rule never
@@ -80,11 +79,16 @@
 
 <group name="isiem_net,">
 
-  <!-- One inbound TCP SYN logged by the endpoint's iptables LOG rule. Level 3 so it
-       is written to alerts.json (default log_alert_level is 3) where the ML engine
-       reads it; groups firewall/connection feed the engine's conn_events feature. -->
+  <!-- One inbound TCP SYN logged by the endpoint's iptables LOG rule.
+       Verified with wazuh-logtest on 4.14: Wazuh's built-in "kernel" decoder
+       already parses these lines (srcip, dstip, dstport, protocol) and they land
+       on stock rule 4100 "Firewall rules grouped", which is level 0 and therefore
+       never written to alerts.json. This child of 4100 raises our tagged lines to
+       level 3 so the ML engine sees them; groups firewall/connection feed its
+       conn_events feature. -->
   <rule id="100020" level="3">
-    <decoded_as>isiem-syn</decoded_as>
+    <if_sid>4100</if_sid>
+    <match>ISIEM-SYN: </match>
     <description>ISIEM: inbound TCP SYN $(srcip) -> $(dstip):$(dstport)</description>
     <group>firewall,connection,</group>
   </rule>

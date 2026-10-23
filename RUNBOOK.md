@@ -28,17 +28,16 @@ cd ~ && git clone https://github.com/Alex-Muiruri21/isiem.git   # private: token
 (If `~/isiem` already exists as a plain scp copy, see "Converting an scp copy to git"
 at the end.)
 
-### A2. Install rules + decoders + log dir, then TEST before restarting
+### A2. Install rules + log dir, then TEST before restarting
 ```bash
 sudo cp ~/isiem/wazuh/rules/isiem_rules.xml /var/ossec/etc/rules/
-sudo cp ~/isiem/wazuh/decoders/isiem_decoders.xml /var/ossec/etc/decoders/
-sudo chown root:wazuh /var/ossec/etc/rules/isiem_rules.xml /var/ossec/etc/decoders/isiem_decoders.xml
+sudo chown root:wazuh /var/ossec/etc/rules/isiem_rules.xml
 sudo mkdir -p /var/log/isiem && sudo chmod 755 /var/log/isiem
 sudo /var/ossec/bin/wazuh-analysisd -t && echo CONFIG-OK
 ```
-Only continue if it prints `CONFIG-OK`. If it errors on `isiem_decoders.xml`,
-remove that file (`sudo rm /var/ossec/etc/decoders/isiem_decoders.xml`) and send
-Claude the error — the rest of the system still works without it.
+Only continue if it prints `CONFIG-OK`, otherwise send Claude the error. (No
+custom decoder is needed: Wazuh's built-in `kernel` decoder already parses the SYN
+log lines — see rule 100020.)
 
 > **Why pcre2:** rule 100051 matches severity with `type="pcre2"`. The default
 > matcher has no `[0-5]` character classes, so before the fix it never matched and
@@ -139,7 +138,8 @@ sudo grep -a ISIEM-SYN /var/log/kern.log | tail -1
 sudo journalctl -k | grep ISIEM-SYN | tail -1        # if kern.log printed nothing
 ```
 Copy that line. On the **server**: `sudo /var/ossec/bin/wazuh-logtest`, paste it.
-Want: decoder `isiem-syn`, fields `srcip`, `dstip`, `dstport`, and **rule 100020**.
+Want: decoder `kernel`, fields `srcip`, `dstip`, `dstport`, and **rule 100020**
+(level 3). Rule 4100 (level 0) means the new isiem_rules.xml isn't installed.
 If it shows a different decoder or no rule, paste the logtest output to Claude —
 Scenarios 2, 3 and 5 depend on this.
 
