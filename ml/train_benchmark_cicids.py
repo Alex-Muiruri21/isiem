@@ -78,7 +78,7 @@ def tee(fh, *args):
     fh.write(line + "\n")
 
 
-def load_all(data_dir, report):
+def load_all(data_dir, report, per_file_frac=None):
     files = sorted(glob.glob(os.path.join(data_dir, "*.csv")))
     if not files:
         raise SystemExit(
@@ -86,13 +86,26 @@ def load_all(data_dir, report):
             f"  Put the CICIDS2017 MachineLearningCSV files there, or pass --data <dir>."
         )
     tee(report, f"Found {len(files)} CSV file(s):")
+    if per_file_frac:
+        tee(report, f"Random-sampling {per_file_frac:.0%} of each file at read time "
+                    f"(memory-safe mode).")
     frames = []
     for fp in files:
         # engine='python' + on_bad_lines tolerates the occasional malformed row.
         df = pd.read_csv(fp, low_memory=False, skipinitialspace=True,
                          encoding="latin-1", on_bad_lines="skip")
         df.columns = [c.strip() for c in df.columns]
-        tee(report, f"  {os.path.basename(fp):60s} {len(df):>9d} rows")
+        n = len(df)
+        # Sample EACH file before concat so the full 2.8M-row frame never has to
+        # live in RAM at once. Random sampling keeps each file's label mix.
+        if per_file_frac and 0 < per_file_frac < 1:
+            df = df.sample(frac=per_file_frac, random_state=42)
+        # Downcast numeric columns to float32 now to roughly halve memory.
+        for c in df.columns:
+            if df[c].dtype == "float64":
+                df[c] = df[c].astype("float32")
+        tee(report, f"  {os.path.basename(fp):60s} {n:>9d} rows"
+                    + (f" -> kept {len(df)}" if per_file_frac else ""))
         frames.append(df)
     df = pd.concat(frames, ignore_index=True)
     del frames
@@ -104,13 +117,17 @@ def main():
     ap.add_argument("--data", default=DEFAULT_DATA, help="dir of CICIDS2017 CSVs")
     ap.add_argument("--max-rows", type=int, default=500000,
                     help="stratified row cap to fit in RAM (0 = use all rows)")
+    ap.add_argument("--per-file-frac", type=float, default=None,
+                    help="randomly sample this fraction of EACH file at read time, "
+                         "before concat (e.g. 0.2). Use on low-RAM VMs to avoid "
+                         "swap-thrashing the full 2.8M-row load.")
     args = ap.parse_args()
 
     report = open(os.path.join(EVID, "benchmark_cicids_results.txt"), "w")
     tee(report, "CICIDS2017 benchmark - Random Forest + Isolation Forest")
     tee(report, "=" * 60)
 
-    df = load_all(args.data, report)
+    df = load_all(args.data, report, per_file_frac=args.per_file_frac)
 
     # --- find the label column (CICIDS2017 calls it 'Label') ---
     label_col = next((c for c in df.columns if c.strip().lower() == "label"), None)
