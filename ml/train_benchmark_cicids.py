@@ -143,7 +143,9 @@ def main():
     vc = pd.Series(y).value_counts()
     keep = set(vc[vc >= 10].index)
     mask = np.array([lab in keep for lab in y])
-    X, y = X[mask.nonzero()[0]], y[mask]
+    # X is a DataFrame: boolean-select rows by position, then reset the index so
+    # the later numpy conversions line up. (y is already a numpy array.)
+    X, y = X[mask].reset_index(drop=True), y[mask]
     if set(keep) != set(vc.index):
         tee(report, f"Dropped rare classes (<10 rows): {sorted(set(vc.index) - keep)}")
 
