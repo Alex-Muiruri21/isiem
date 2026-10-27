@@ -1,0 +1,15 @@
+{
+  "rf_accuracy_matched_split": 99.85,
+  "iso_accuracy_benign_vs_attack": 81.25,
+  "dataset": "CICIDS2017 (MachineLearningCSV)",
+  "rows_used": 500000,
+  "classes": [
+    "BENIGN",
+    "Bot",
+    "Brute Force",
+    "DDoS",
+    "DoS",
+    "PortScan",
+    "Web Attack"
+  ]
+}
