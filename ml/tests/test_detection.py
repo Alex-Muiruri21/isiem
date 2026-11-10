@@ -17,6 +17,7 @@ EXPECT = {
     "192.168.242.143": "Honeypot Interaction",
     "192.168.242.144": "Command and Control Beaconing",
     "192.168.242.145": "Suspicious Authentication",
+    "192.168.242.146": "Privilege Escalation",
 }
 MUST_NOT_FLAG = "192.168.242.150"  # normal baseline traffic
 

@@ -62,6 +62,16 @@ rows.append(alert(base + timedelta(seconds=5), 5, ["authentication_success", "ss
                   "endpoint-2", "192.168.242.133",
                   {"srcip": "192.168.242.145", "srcuser": "backupsvc", "dstport": "22"}))
 
+# 6b. Privilege escalation: .146 logs in to endpoint-1, then sudo events on that
+#     host. sudo lines carry no srcip; the engine attributes them to the login.
+rows.append(alert(base + timedelta(seconds=200), 3, ["authentication_success", "sshd"],
+                  "endpoint-1", "192.168.242.132",
+                  {"srcip": "192.168.242.146", "srcuser": "endpoint1", "dstport": "22"}))
+for i in range(3):
+    rows.append(alert(base + timedelta(seconds=202 + i), 5, ["syslog", "sudo"],
+                      "endpoint-1", "192.168.242.132",
+                      {"srcuser": "endpoint1", "dstuser": "root"}))
+
 # 7. Normal: .150 a couple of ordinary connections, business-hours baseline
 day = datetime(2026, 10, 16, 11, 0, 0, tzinfo=timezone.utc)
 for i in range(2):

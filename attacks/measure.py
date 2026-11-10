@@ -19,7 +19,7 @@ import argparse
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 VERDICTS = os.environ.get("ISIEM_VERDICT_LOG", "/var/log/isiem/ml_verdicts.json")
 AR_LOG = os.environ.get("ISIEM_AR_LOG", "/var/ossec/logs/active-responses.log")
@@ -27,7 +27,14 @@ EVID = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "evidence")
 FMT = "%Y-%m-%d %H:%M:%S"
 
 
-def first_detection(ip, start):
+def in_window(t, start, window):
+    """Only count events from THIS run: at/after START and within `window` seconds.
+    Without the upper bound, a scenario with no response of its own (e.g. a port
+    scan) picked up the NEXT scenario's block and reported a bogus MTTR."""
+    return start <= t <= start + timedelta(seconds=window)
+
+
+def first_detection(ip, start, window):
     best = None
     if not os.path.exists(VERDICTS):
         return None
@@ -43,12 +50,12 @@ def first_detection(ip, start):
                 t = datetime.strptime(v["detected_at"], FMT)
             except (KeyError, ValueError):
                 continue
-            if t >= start and (best is None or t < best[0]):
+            if in_window(t, start, window) and (best is None or t < best[0]):
                 best = (t, v.get("category"))
     return best
 
 
-def first_block(ip, start):
+def first_block(ip, start, window):
     if not os.path.exists(AR_LOG):
         return None
     best = None
@@ -59,7 +66,7 @@ def first_block(ip, start):
             if not m:
                 continue
             t = datetime.strptime(m.group(1), FMT)
-            if t >= start and (best is None or t < best):
+            if in_window(t, start, window) and (best is None or t < best):
                 best = t
     return best
 
@@ -69,11 +76,14 @@ def main():
     ap.add_argument("--start", required=True, help='attack start "YYYY-MM-DD HH:MM:SS"')
     ap.add_argument("--ip", required=True, help="attacker source IP")
     ap.add_argument("--scenario", required=True)
+    ap.add_argument("--window", type=int, default=300,
+                    help="only count detections/blocks within this many seconds "
+                         "after START (default 300)")
     args = ap.parse_args()
 
     start = datetime.strptime(args.start, FMT)
-    det = first_detection(args.ip, start)
-    blk = first_block(args.ip, start)
+    det = first_detection(args.ip, start, args.window)
+    blk = first_block(args.ip, start, args.window)
 
     mttd = (det[0] - start).total_seconds() if det else None
     mttr = (blk - start).total_seconds() if blk else None

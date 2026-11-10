@@ -1,0 +1,12 @@
+scenario,attacker_ip,start,detected,category,mttd_s,contained,mttr_s
+SSH Brute Force,192.168.242.204,2026-10-21 13:50:37,2026-10-21 13:50:54,Brute Force / Credential Stuffing,17.0,,
+SSH Brute Force,192.168.242.204,2026-10-21 15:15:19,2026-10-21 15:15:30,Brute Force / Credential Stuffing,11.0,,
+SSH Brute Force,192.168.242.204,2026-10-22 11:54:40,2026-10-22 11:55:12,Honeypot Interaction,32.0,,
+SSH Brute Force,192.168.242.203,2026-10-22 21:16:58,2026-10-22 21:17:12,Brute Force / Credential Stuffing,14.0,,
+SSH Brute Force,192.168.242.203,2026-10-22 22:06:41,2026-10-22 22:06:58,Brute Force / Credential Stuffing,17.0,2026-10-22 22:07:05,24.0
+SSH Brute Force,192.168.242.203,2026-10-22 21:16:58,2026-10-22 21:17:12,Brute Force / Credential Stuffing,14.0,,
+SSH Brute Force,192.168.242.203,2026-10-22 22:06:41,2026-10-22 22:06:58,Brute Force / Credential Stuffing,17.0,2026-10-22 22:07:05,24.0
+Port Scan,192.168.242.204,2026-10-23 08:47:05,2026-10-23 08:47:19,Port Scanning / Reconnaissance,14.0,,
+Lateral Movement,192.168.242.204,2026-10-23 09:10:54,2026-10-23 09:11:04,Lateral Movement,10.0,2026-10-23 09:11:06,12.0
+Privilege Escalation,192.168.242.204,2026-10-23 10:50:45,2026-10-23 10:50:53,Privilege Escalation,8.0,2026-10-23 10:51:01,16.0
+C2 Beaconing,192.168.242.204,2026-10-23 11:16:28,2026-10-23 11:17:13,Command and Control Beaconing,45.0,2026-10-23 11:17:15,47.0

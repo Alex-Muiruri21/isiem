@@ -35,6 +35,7 @@ On the **Wazuh server**:
 ```bash
 sudo cp wazuh/rules/isiem_rules.xml      /var/ossec/etc/rules/
 sudo mkdir -p /var/log/isiem && sudo chmod 755 /var/log/isiem
+sudo /var/ossec/bin/wazuh-analysisd -t && echo CONFIG-OK   # test before restarting
 ```
 
 Open `/var/ossec/etc/ossec.conf` and paste the blocks from
@@ -63,7 +64,7 @@ skipped cleanly.
 
 ## Step 2b — endpoints: make port scans visible
 
-On **Endpoint-1 and Endpoint-2**: `sudo bash attacks/endpoint_prep.sh`
+On **Endpoint-1, Endpoint-2 and the Wazuh server**: `sudo bash attacks/endpoint_prep.sh`
 (logs inbound SYNs so Wazuh sees scans). Verify one logged line decodes with
 `sudo /var/ossec/bin/wazuh-logtest` on the manager.
 
@@ -111,8 +112,10 @@ Each run appends a row to `evidence/metrics.csv`. **Restart `ml_engine.py` betwe
 ## Reset between runs
 
 ```bash
-# on the attacked endpoint, clear any leftover blocks (AR also auto-expires in 600s)
-sudo iptables -F INPUT
+# on the attacked endpoint(s) and the server, remove only the attacker's block
+# (AR also auto-expires in 600s). Do NOT use "iptables -F INPUT": it also deletes
+# the ISIEM-SYN LOG rule that Scenarios 2, 3 and 5 depend on.
+sudo iptables -D INPUT -s <KALI-IP> -j DROP
 # re-enable a locked test account if needed
 sudo passwd --unlock <user>
 ```

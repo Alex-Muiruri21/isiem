@@ -73,6 +73,12 @@ def signature_classify(f):
     if f["failed_logins"] >= 8:
         return "Brute Force / Credential Stuffing"
 
+    # Privilege escalation: after logging in, the actor triggers sudo/privilege
+    # events on that host (attributed in behavioural_features.py). Tested before
+    # the softer auth signatures because it is the highest-harm category.
+    if f.get("priv_events", 0) >= 1 and f["successful_logins"] >= 1:
+        return "Privilege Escalation"
+
     # Lateral movement: successful auth fanning out to several internal hosts,
     # which a normal user session does not do.
     if f["successful_logins"] >= 1 and f["distinct_dst_hosts"] >= 3:
@@ -85,7 +91,9 @@ def signature_classify(f):
         return "Command and Control Beaconing"
 
     # Data exfiltration: sustained outbound connection volume to few hosts.
-    if f["conn_events"] >= 25 and f["distinct_dst_hosts"] <= 3:
+    # (failed_logins == 0 so a fast brute force's SYN burst is not misread.)
+    if f["conn_events"] >= 25 and f["distinct_dst_hosts"] <= 3 \
+            and f["failed_logins"] == 0:
         return "Data Exfiltration"
 
     # Suspicious authentication: a successful login that is off-hours or from a
@@ -93,7 +101,7 @@ def signature_classify(f):
     if f["successful_logins"] >= 1 and (f["off_hours"] == 1 or f["new_source"] == 1):
         return "Suspicious Authentication"
 
-    # Privilege escalation surfaces mainly through high-level host rules.
+    # Privilege escalation can also surface through high-level host rules.
     if f["max_rule_level"] >= 12 and f["successful_logins"] >= 1:
         return "Privilege Escalation"
 
@@ -172,5 +180,5 @@ if __name__ == "__main__":
          "max_rule_level": 5, "event_count": 10},
     ]
     for t in tests:
-        vec = [t[k] for k in __import__("behavioural_features").FEATURE_NAMES]
+        vec = [t.get(k, 0) for k in __import__("behavioural_features").FEATURE_NAMES]
         print(c.classify(t, vec))

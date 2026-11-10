@@ -1,0 +1,51 @@
+CICIDS2017 benchmark - Random Forest + Isolation Forest
+============================================================
+Found 8 CSV file(s):
+Random-sampling 20% of each file at read time (memory-safe mode).
+  Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv                225745 rows -> kept 45149
+  Friday-WorkingHours-Afternoon-PortScan.pcap_ISCX.csv            286467 rows -> kept 57293
+  Friday-WorkingHours-Morning.pcap_ISCX.csv                       191033 rows -> kept 38207
+  Monday-WorkingHours.pcap_ISCX.csv                               529918 rows -> kept 105984
+  Thursday-WorkingHours-Afternoon-Infilteration.pcap_ISCX.csv     288602 rows -> kept 57720
+  Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX.csv          170366 rows -> kept 34073
+  Tuesday-WorkingHours.pcap_ISCX.csv                              445909 rows -> kept 89182
+  Wednesday-workingHours.pcap_ISCX.csv                            692703 rows -> kept 138541
+Dropping non-feature columns: ['Fwd Header Length.1']
+Rows after cleaning: 565596 (dropped 553 with inf/NaN)
+Family distribution: {'BENIGN': 454310, 'DoS': 50191, 'PortScan': 31736, 'DDoS': 25744, 'Brute Force': 2771, 'Web Attack': 464, 'Bot': 370, 'Infiltration': 7, 'Heartbleed': 3}
+Dropped rare classes (<10 rows): ['Heartbleed', 'Infiltration']
+Stratified subsample to 500000 rows (--max-rows 500000).
+
+[1] Random Forest - matched 80/20 split
+------------------------------------------------------------
+Accuracy (matched split): 99.85%
+              precision    recall  f1-score   support
+
+      BENIGN       1.00      1.00      1.00     80326
+         Bot       0.96      0.66      0.78        65
+ Brute Force       1.00      1.00      1.00       490
+        DDoS       1.00      1.00      1.00      4552
+         DoS       1.00      1.00      1.00      8874
+    PortScan       0.99      0.99      0.99      5611
+  Web Attack       0.99      0.98      0.98        82
+
+    accuracy                           1.00    100000
+   macro avg       0.99      0.95      0.96    100000
+weighted avg       1.00      1.00      1.00    100000
+
+Confusion matrix saved -> evidence/benchmark_cicids_rf_confusion.csv
+
+[2] Isolation Forest - trained on BENIGN rows only
+------------------------------------------------------------
+Accuracy (normal vs attack): 81.25%
+              precision    recall  f1-score   support
+
+      attack       0.53      0.46      0.49     98372
+      normal       0.87      0.90      0.89    401628
+
+    accuracy                           0.81    500000
+   macro avg       0.70      0.68      0.69    500000
+weighted avg       0.80      0.81      0.81    500000
+
+
+Summary: {"rf_accuracy_matched_split": 99.85, "iso_accuracy_benign_vs_attack": 81.25, "dataset": "CICIDS2017 (MachineLearningCSV)", "rows_used": 500000, "classes": ["BENIGN", "Bot", "Brute Force", "DDoS", "DoS", "PortScan", "Web Attack"]}
